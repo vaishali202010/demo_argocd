@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: myapp
-        image: vaishali841/argocd-demo:13a8804
+        image: vaishali841/argocd-demo:d4ee2eb
         ports:
         - containerPort: 8080
         readinessProbe:
