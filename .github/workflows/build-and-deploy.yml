@@ -5,6 +5,11 @@ on:
     branches: [main]
   workflow_dispatch: # Allow manual triggering
 
+  # Add explicit permissions block
+permissions:
+  contents: write
+  pull-requests: write
+
 env:
   DOCKER_IMAGE: vaishali841/argocd-demo
   K8S_DEPLOYMENT_FILE: k8s/deployment.yaml
@@ -14,8 +19,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Checkout the code
+      #- name: Checkout code
+      #  uses: actions/checkout@v3
+
+            # Checkout the code with token to allow pushing
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          # Ensure we fetch the repository
+          fetch-depth: 0
+          # Use built-in token with write permissions
+          token: ${{ github.token }}
 
       # Set up Docker buildx
       - name: Set up Docker Buildx
@@ -54,12 +68,32 @@ jobs:
           cat ${{ env.K8S_DEPLOYMENT_FILE }}
 
 
-      # Use a separate action to push changes that includes the necessary permissions
-      - name: Push changes
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: "Update image to ${{ steps.tag.outputs.tag }}"
-          file_pattern: ${{ env.K8S_DEPLOYMENT_FILE }}
-          commit_user_name: GitHub Actions
-          commit_user_email: github-actions@github.com
-          commit_author: GitHub Actions <github-actions@github.com>
+      # # Use a separate action to push changes that includes the necessary permissions
+      # - name: Push changes
+      #   uses: stefanzweifel/git-auto-commit-action@v4
+      #   with:
+      #     commit_message: "Update image to ${{ steps.tag.outputs.tag }}"
+      #     file_pattern: ${{ env.K8S_DEPLOYMENT_FILE }}
+      #     commit_user_name: GitHub Actions
+      #     commit_user_email: github-actions@github.com
+      #     commit_author: GitHub Actions <github-actions@github.com>
+
+
+      # Configure git with explicit auth
+      - name: Configure Git
+        run: |
+          git config --global user.name 'GitHub Actions'
+          git config --global user.email 'github-actions@github.com'
+          
+          # Important: Set the URL with the token explicitly
+          git remote set-url origin https://${{ github.actor }}:${{ github.token }}@github.com/${{ github.repository }}.git
+          
+          # Verify the remote URL is correct (will mask the token)
+          git remote -v
+
+      # Direct git commit and push with auth
+      - name: Commit and push changes
+        run: |
+          git add ${{ env.K8S_DEPLOYMENT_FILE }}
+          git commit -m "Update image to ${{ steps.tag.outputs.tag }}" || echo "No changes to commit"
+          git push
