@@ -53,11 +53,13 @@ jobs:
           echo "Updated deployment file:"
           cat ${{ env.K8S_DEPLOYMENT_FILE }}
 
-      # Commit and push the updated deployment file
-      - name: Commit and push changes
-        run: |
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'actions@github.com'
-          git add ${{ env.K8S_DEPLOYMENT_FILE }}
-          git commit -m "Update image to ${{ steps.tag.outputs.tag }}" || echo "No changes to commit"
-          git push
+
+      # Use a separate action to push changes that includes the necessary permissions
+      - name: Push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Update image to ${{ steps.tag.outputs.tag }}"
+          file_pattern: ${{ env.K8S_DEPLOYMENT_FILE }}
+          commit_user_name: GitHub Actions
+          commit_user_email: github-actions@github.com
+          commit_author: GitHub Actions <github-actions@github.com>
