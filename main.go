@@ -43,7 +43,7 @@ func errorResponse(w http.ResponseWriter, code int, message string) {
 // healthHandler returns a simple health check response
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, map[string]string{
-		"status": "healthy buddy",
+		"status": "hatt jaaa healthy buddy",
 		"time":   time.Now().Format(time.RFC3339),
 	})
 }
